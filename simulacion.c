@@ -26,8 +26,6 @@ main(int argc, char** argv ){
     ito[i] = 0;
   double* pto = malloc(N * sizeof(double));
 
-  printf("%d %d %d\n",NT, NS, NR);
-
   while((tiempo < tiempo_final) || (NS != 0)){
     proximo_puesto_a_liberarse = menor(tps, N);
     if(tpll < tps[proximo_puesto_a_liberarse]){
@@ -91,8 +89,6 @@ main(int argc, char** argv ){
       tpll = HV;
   }
 
-  printf("%d %d %d %f %f\n",NT, NS, NR, sts, stll);
-
   calculo_de_resultados(N, stll, sts, sto, tiempo, NR, NT, pto, &pps, &ptr);
   imprimir_resultados(pto, pps, ptr, N);
 }
@@ -106,8 +102,6 @@ void calculo_de_resultados(int empleados, double stll, double sts, double* sto, 
   *pps = (sts - stll) / (NT - NR);
 
   *ptr = (float)NR / NT;
-
-  printf("tiempo: %f\n", tiempo);
 }
 
 void imprimir_resultados(double* pto, double pps, double ptr, int empleados){
