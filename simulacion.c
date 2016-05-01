@@ -89,6 +89,9 @@ main(int argc, char** argv ){
       tpll = HV;
   }
 
+  for(i = 0; i < N; i++)
+    sto[i] += tiempo - ito[i];
+
   calculo_de_resultados(N, stll, sts, sto, tiempo, NR, NT, pto, &pps, &ptr);
   imprimir_resultados(pto, pps, ptr, N);
 }
