@@ -6,25 +6,24 @@
 double intervalo_entre_arribos();
 double tiempo_de_atencion_empleado();
 double tiempo_de_atencion_tester();
+double random_real();
 int menor(double* tiempos, int cantidad);
 int posicion_puesto_libre(double* puestos, int cantidad);
-void calculo_de_resultados(int empleados, double stll, double sts, double* sto, double tiempo, int NR, int NT, double* pto, double* pps, double* ptr);
-void imprimir_resultados(double* pto, double pps, double ptr, int empleados);
+void calculo_de_resultados(int empleados, double stll, double sts, double sto, double tiempo, int NR, int NT, double* pto, double* pps, double* ptr);
+void imprimir_resultados(double pto, double pps, double ptr, int empleados);
 
 // Recibe cantidad de empleados (N), tiempo final en minutos (hasta HV)
 main(int argc, char** argv ){
-  int N = atoi(argv[1]), proximo_puesto_a_liberarse, NT = 0, NS = 0, NR = 0, puesto_libre, i;
+  int N = atoi(argv[1]), proximo_puesto_a_liberarse, NT = 0, NS = 0, NR = 0, puesto_libre, i, subtareas, puestos_a_ocupar;
   double tiempo_final = atof(argv[2]), tiempo = 0, tpll = 0, stll = 0, sts = 0, tc_tester = 0, pps, ptr, tiempo_atencion_tester_a_tarea;
   double* tps = malloc(N * sizeof(double));
   for(i = 0; i < N; i++)
     tps[i] = HV;
-  double* sto = malloc(N * sizeof(double));
-  for(i = 0; i < N; i++)
-    sto[i] = 0;
+  double sto = 0;
   double* ito = malloc(N * sizeof(double));
   for(i = 0; i < N; i++)
     ito[i] = 0;
-  double* pto = malloc(N * sizeof(double));
+  double pto;
 
   while((tiempo < tiempo_final) || (NS != 0)){
     proximo_puesto_a_liberarse = menor(tps, N);
@@ -34,26 +33,32 @@ main(int argc, char** argv ){
       //avance del tiempo
       tiempo = tpll;
 
+      subtareas = (random_real() < 0.05) ? 2 : 1;
+      
       //determinacion de EFnoC
       tpll = tiempo + intervalo_entre_arribos();
       
       //actualizacion del vector de estado
-      NT++;
-      NS++;
+      NT += subtareas;
+      NS += subtareas;
 
       if(NS > (N + 10)){
         //rechazo
-        NR++;
-        NS--;
+        NR += subtareas;
+        NS -= subtareas;
       }else{
         //calculos auxiliares
-        stll += tiempo;
+        stll += (tiempo * subtareas);
 
-        if(NS <= N){
-          //evento futuro condicionado
-          puesto_libre = posicion_puesto_libre(tps, N);
-          sto[puesto_libre] += (tiempo - ito[puesto_libre]);
-          tps[puesto_libre] = tiempo + tiempo_de_atencion_empleado();
+        if((NS - subtareas) < N){
+          puestos_a_ocupar = (NS <= N) ? subtareas : (subtareas - (NS - N));
+
+          for(i = 0; i < puestos_a_ocupar; i++){
+            //evento futuro condicionado
+            puesto_libre = posicion_puesto_libre(tps, N);
+            sto += (tiempo - ito[puesto_libre]);
+            tps[puesto_libre] = tiempo + tiempo_de_atencion_empleado();
+          }
         }
       } 
     }else{
@@ -61,7 +66,6 @@ main(int argc, char** argv ){
 
       //avance del tiempo
       tiempo = tps[proximo_puesto_a_liberarse];
-
 
       //actualizacion del vector de estado
       NS--;
@@ -90,30 +94,24 @@ main(int argc, char** argv ){
   }
 
   for(i = 0; i < N; i++)
-    sto[i] += tiempo - ito[i];
+    sto += tiempo - ito[i];
 
-  calculo_de_resultados(N, stll, sts, sto, tiempo, NR, NT, pto, &pps, &ptr);
+  calculo_de_resultados(N, stll, sts, sto, tiempo, NR, NT, &pto, &pps, &ptr);
   imprimir_resultados(pto, pps, ptr, N);
 }
 
-void calculo_de_resultados(int empleados, double stll, double sts, double* sto, double tiempo, int NR, int NT, double* pto, double* pps, double* ptr){
-  int i;
-  for(i = 0; i < empleados; i++){
-    pto[i] = sto[i] / tiempo;
-  }
+void calculo_de_resultados(int empleados, double stll, double sts, double sto, double tiempo, int NR, int NT, double* pto, double* pps, double* ptr){
+  *pto = (sto / empleados) / tiempo;
 
   *pps = (sts - stll) / (NT - NR);
 
   *ptr = (float)NR / NT;
 }
 
-void imprimir_resultados(double* pto, double pps, double ptr, int empleados){
-  int i;
+void imprimir_resultados(double pto, double pps, double ptr, int empleados){
   printf("Teniendo %d empleados:\n", empleados);
 
-  for(i = 0; i < empleados; i++){
-    printf("El puesto %d tiene un porcentaje de tiempo ocioso de %f %%.\n", i + 1, pto[i] * 100);
-  }
+  printf("El porcentaje de tiempo ocioso es de %f %%.\n", pto * 100);
 
   printf("El promedio de permanencia en el sistema es de %f minutos.\n", pps);
 
